@@ -6,12 +6,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String?   @unique
   password      String?
@@ -19,21 +20,23 @@ model User {
   role          String    @default("MEMBER") // ADMIN or MEMBER
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  latitude      Float?
+  longitude     Float?
   birds         Bird[]
   registrations Registration[]
 }
 
 model Club {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
   events      Event[]
 }
 
 model Event {
-  id                  String   @id @default(cuid())
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
   name                String
-  clubId              String
+  clubId              String   @db.ObjectId
   club                Club     @relation(fields: [clubId], references: [id])
   description         String?
   releaseLocationName String
@@ -51,11 +54,11 @@ model Event {
 }
 
 model Bird {
-  id              String   @id @default(cuid())
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
   bandNumber      String   @unique
   color           String?
   sex             String?
-  ownerId         String
+  ownerId         String   @db.ObjectId
   owner           User     @relation(fields: [ownerId], references: [id])
   loftLat         Float
   loftLon         Float
@@ -65,12 +68,12 @@ model Bird {
 }
 
 model Registration {
-  id          String      @id @default(cuid())
-  eventId     String
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String      @db.ObjectId
   event       Event       @relation(fields: [eventId], references: [id])
-  birdId      String
+  birdId      String      @db.ObjectId
   bird        Bird        @relation(fields: [birdId], references: [id])
-  userId      String
+  userId      String      @db.ObjectId
   user        User        @relation(fields: [userId], references: [id])
   distance    Float?      // Calculated distance in KM
   createdAt   DateTime    @default(now())
@@ -78,8 +81,8 @@ model Registration {
 }
 
 model ArrivalLog {
-  id             String       @id @default(cuid())
-  registrationId String       @unique
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  registrationId String       @unique @db.ObjectId
   registration   Registration @relation(fields: [registrationId], references: [id])
   arrivalTime    DateTime
   speed          Float        // in m/min
@@ -87,3 +90,4 @@ model ArrivalLog {
   status         String       @default("QUALIFIED") // QUALIFIED, DISQUALIFIED
   createdAt      DateTime     @default(now())
 }
+
