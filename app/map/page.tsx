@@ -3,20 +3,27 @@ import { prisma } from "@/lib/prisma";
 import { Activity } from "lucide-react";
 import MapClientLoader from "@/components/MapClientLoader";
 
+export const dynamic = "force-dynamic";
+
 export default async function GlobalMapPage() {
-  const events = await prisma.event.findMany({
-    where: {
-      status: "ACTIVE"
-    },
-    include: {
-      registrations: {
-        include: {
-          bird: true,
-          user: true,
+  let events: any[] = [];
+  try {
+    events = await prisma.event.findMany({
+      where: {
+        status: "ACTIVE"
+      },
+      include: {
+        registrations: {
+          include: {
+            bird: true,
+            user: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("BUILD_TIME_DB_FETCH_SKIP: Connection unavailable.");
+  }
 
   const defaultCenter = events.length > 0 
     ? { lat: events[0].releaseLat, lon: events[0].releaseLon, name: events[0].name }

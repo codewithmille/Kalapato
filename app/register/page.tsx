@@ -1,12 +1,26 @@
+"use client";
+
+import { useActionState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { Plane } from "lucide-react";
+import { Plane, Loader2 } from "lucide-react";
 import { registerUserAction } from "@/app/actions/auth-actions";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
+  const [state, formAction, isPending] = useActionState(registerUserAction, null);
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error("REGISTRATION_FAILURE", {
+        description: state.error,
+      });
+    }
+  }, [state]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -23,7 +37,7 @@ export default function RegisterPage() {
             <p className="text-[10px] font-black text-gray-400 mt-4 uppercase tracking-[0.2em]">Join the Kalapato Fleet</p>
           </div>
           
-          <form action={registerUserAction} className="space-y-6">
+          <form action={formAction} className="space-y-6">
             <div className="space-y-2">
               <Label className="nb-badge bg-black text-primary mb-1 inline-block">
                 Full_Name
@@ -61,8 +75,19 @@ export default function RegisterPage() {
               />
             </div>
             
-            <Button type="submit" className="nb-button w-full bg-primary text-black h-20 text-xl">
-              INITIALIZE_PERSONNEL
+            <Button 
+              type="submit" 
+              disabled={isPending}
+              className="nb-button w-full bg-primary text-black h-20 text-xl disabled:opacity-70"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-3 h-8 w-8 animate-spin stroke-[3px]" />
+                  COMMUNICATING...
+                </>
+              ) : (
+                "INITIALIZE_PERSONNEL"
+              )}
             </Button>
             
             <div className="text-center">

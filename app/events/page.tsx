@@ -1,5 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import { 
   Table, 
   TableBody, 
@@ -20,14 +22,19 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default async function EventsPage() {
-  const events = await prisma.event.findMany({
-    include: {
-      club: true,
-    },
-    orderBy: {
-      releaseDateTime: "desc",
-    },
-  });
+  let events: any[] = [];
+  try {
+    events = await prisma.event.findMany({
+      include: {
+        club: true,
+      },
+      orderBy: {
+        releaseDateTime: "desc",
+      },
+    });
+  } catch (error) {
+    console.error("BUILD_TIME_DB_FETCH_SKIP: Connection unavailable.");
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F0F0F0] dark:bg-[#0A0F1E]">

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function createEventAction(formData: FormData) {
+export async function createEventAction(prevState: any, formData: FormData) {
   try {
     const name = formData.get("name") as string;
     const clubName = formData.get("clubName") as string;
@@ -19,13 +19,15 @@ export async function createEventAction(formData: FormData) {
     const poolingAmounts = formData.get("poolingAmounts") as string;
 
     // 1. Find or create club
-    const club = await prisma.club.upsert({
-      where: { name: clubName }, // Assuming club names are unique for this demo
-      update: {},
-      create: {
-        name: clubName
-      }
+    let club = await prisma.club.findFirst({
+      where: { name: clubName }
     });
+
+    if (!club) {
+      club = await prisma.club.create({
+        data: { name: clubName }
+      });
+    }
 
     // 2. Create Event
     await prisma.event.create({

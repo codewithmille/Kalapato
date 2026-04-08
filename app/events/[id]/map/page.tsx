@@ -5,19 +5,27 @@ import { ArrowLeft, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 import MapClientLoader from "@/components/MapClientLoader";
 
+export const dynamic = "force-dynamic";
+
 export default async function EventMapPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const event = await prisma.event.findUnique({
-    where: { id },
-    include: {
-      registrations: {
-        include: {
-          bird: true,
-          user: true,
+  
+  let event: any = null;
+  try {
+    event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        registrations: {
+          include: {
+            bird: true,
+            user: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("BUILD_TIME_DB_FETCH_SKIP: Connection unavailable.");
+  }
 
   if (!event) {
     notFound();

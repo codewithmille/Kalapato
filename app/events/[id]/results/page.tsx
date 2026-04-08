@@ -7,21 +7,29 @@ import { Button } from "@/components/ui/button";
 import { SpeedChart } from "@/components/SpeedChart";
 import { Leaderboard } from "@/components/Leaderboard";
 
+export const dynamic = "force-dynamic";
+
 export default async function EventResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const event = await prisma.event.findUnique({
-    where: { id },
-    include: {
-      club: true,
-      registrations: {
-        include: {
-          bird: true,
-          user: true,
-          arrivalLog: true,
+  
+  let event: any = null;
+  try {
+    event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        club: true,
+        registrations: {
+          include: {
+            bird: true,
+            user: true,
+            arrivalLog: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("BUILD_TIME_DB_FETCH_SKIP: Connection unavailable.");
+  }
 
   if (!event) {
     notFound();

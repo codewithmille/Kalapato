@@ -1,13 +1,27 @@
+"use client";
+
+import { useActionState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createEventAction } from "@/app/actions/event-actions";
-import { ArrowLeft, Flag } from "lucide-react";
+import { ArrowLeft, Flag, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function NewEventPage() {
+  const [state, formAction, isPending] = useActionState(createEventAction, null);
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error("MISSION_FAILED", {
+        description: state.error,
+      });
+    }
+  }, [state]);
+
   return (
     <div className="flex min-h-screen flex-col bg-[#F0F0F0] dark:bg-[#0A0F1E]">
       <Navbar />
@@ -35,7 +49,7 @@ export default function NewEventPage() {
             </div>
           </div>
 
-          <form action={createEventAction} className="space-y-8">
+          <form action={formAction} className="space-y-8">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black tracking-widest text-black dark:text-[#F5C518] uppercase">Race Name / Event ID</Label>
@@ -93,8 +107,19 @@ export default function NewEventPage() {
               </div>
             </div>
 
-            <Button type="submit" className="nb-button w-full bg-[#F5C518] text-black h-20 text-xl">
-              INITIALIZE FLIGHT MISSION
+            <Button 
+              type="submit" 
+              disabled={isPending}
+              className="nb-button w-full bg-[#F5C518] text-black h-20 text-xl disabled:opacity-70"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-3 h-8 w-8 animate-spin stroke-[3px]" />
+                  INITIATING MISSION...
+                </>
+              ) : (
+                "INITIALIZE FLIGHT MISSION"
+              )}
             </Button>
           </form>
         </div>

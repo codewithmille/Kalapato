@@ -1,5 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { 
@@ -25,19 +27,24 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const session = await getServerSession(authOptions);
   
-  const event = await prisma.event.findUnique({
-    where: { id },
-    include: {
-      club: true,
-      registrations: {
-        include: {
-          bird: true,
-          user: true,
-          arrivalLog: true,
+  let event: any = null;
+  try {
+    event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        club: true,
+        registrations: {
+          include: {
+            bird: true,
+            user: true,
+            arrivalLog: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("BUILD_TIME_DB_FETCH_SKIP: Connection unavailable.");
+  }
 
   if (!event) {
     notFound();
@@ -129,8 +136,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   return (
                     <BirdRegistrationForm 
                       eventId={event.id} 
-                      defaultLat={userCoords?.latitude || undefined}
-                      defaultLon={userCoords?.longitude || undefined}
+                      defaultLat={(userCoords as any)?.latitude || undefined}
+                      defaultLon={(userCoords as any)?.longitude || undefined}
                     />
                   );
                 })()}

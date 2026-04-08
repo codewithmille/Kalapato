@@ -1,25 +1,18 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
 
-const adapter = new PrismaLibSql({
-  url: process.env.DATABASE_URL || "file:./dev.db",
-});
-
-
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   // Create Admin User
   const adminPassword = await bcrypt.hash("admin123", 10);
   await prisma.user.upsert({
-    where: { email: "admin@antigravity.ph" },
+    where: { email: "admin@kalapato.ph" },
     update: {},
     create: {
-      email: "admin@antigravity.ph",
-      name: "Club Admin",
+      email: "admin@kalapato.ph",
+      name: "Kalapato Admin",
       password: adminPassword,
       role: "ADMIN",
     },
@@ -28,10 +21,10 @@ async function main() {
   // Create Member User
   const memberPassword = await bcrypt.hash("member123", 10);
   const member = await prisma.user.upsert({
-    where: { email: "fancier@antigravity.ph" },
+    where: { email: "fancier@kalapato.ph" },
     update: {},
     create: {
-      email: "fancier@antigravity.ph",
+      email: "fancier@kalapato.ph",
       name: "Juan Dela Cruz",
       password: memberPassword,
       role: "MEMBER",
@@ -39,12 +32,18 @@ async function main() {
   });
 
   // Create Club
-  const club = await prisma.club.create({
-    data: {
-      name: "Pili Pigeon Fancier's Club Inc.",
-      description: "Premier pigeon racing club in Pili, Camarines Sur.",
-    },
+  let club = await prisma.club.findFirst({
+    where: { name: "Pili Pigeon Fancier's Club Inc." },
   });
+
+  if (!club) {
+    club = await prisma.club.create({
+      data: {
+        name: "Pili Pigeon Fancier's Club Inc.",
+        description: "Premier pigeon racing club in Pili, Camarines Sur.",
+      },
+    });
+  }
 
   // Create Events
   await prisma.event.create({
