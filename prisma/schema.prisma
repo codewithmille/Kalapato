@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  image         String?
+  role          String    @default("MEMBER") // ADMIN or MEMBER
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  birds         Bird[]
+  registrations Registration[]
+}
+
+model Club {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  events      Event[]
+}
+
+model Event {
+  id                  String   @id @default(cuid())
+  name                String
+  clubId              String
+  club                Club     @relation(fields: [clubId], references: [id])
+  description         String?
+  releaseLocationName String
+  releaseLat          Float
+  releaseLon          Float
+  releaseDateTime     DateTime
+  registrationDeadline DateTime
+  minSpeed            Float    @default(700)
+  status              String   @default("ACTIVE") // ACTIVE, DONE, CANCELLED
+  lapType             String?  // 1st Lap, 2nd Lap, Fun Race, etc.
+  poolingAmounts      String?  // JSON string or comma-separated: 20, 50, 100
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  registrations       Registration[]
+}
+
+model Bird {
+  id              String   @id @default(cuid())
+  bandNumber      String   @unique
+  color           String?
+  sex             String?
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id])
+  loftLat         Float
+  loftLon         Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  registrations   Registration[]
+}
+
+model Registration {
+  id          String      @id @default(cuid())
+  eventId     String
+  event       Event       @relation(fields: [eventId], references: [id])
+  birdId      String
+  bird        Bird        @relation(fields: [birdId], references: [id])
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  distance    Float?      // Calculated distance in KM
+  createdAt   DateTime    @default(now())
+  arrivalLog  ArrivalLog?
+}
+
+model ArrivalLog {
+  id             String       @id @default(cuid())
+  registrationId String       @unique
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  arrivalTime    DateTime
+  speed          Float        // in m/min
+  flightTime     Float        // in minutes
+  status         String       @default("QUALIFIED") // QUALIFIED, DISQUALIFIED
+  createdAt      DateTime     @default(now())
+}
