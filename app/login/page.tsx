@@ -67,8 +67,8 @@ function LoginContent() {
       <div className="flex flex-1 items-center justify-center p-4">
         <div className="nb-card w-full max-w-md p-8 bg-white">
           <div className="text-center mb-8">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center border-[4px] border-black bg-primary shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
-              <Plane className="h-12 w-12 rotate-[-45deg] stroke-[3px]" />
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center border-[4px] border-black bg-primary shadow-[6px_6px_0_0_rgba(0,0,0,1)] overflow-hidden p-2">
+              <img src="/pigeon-logo.png" alt="Kalapato" className="h-full w-full object-contain" />
             </div>
             <h1 className="text-5xl font-black uppercase tracking-tighter text-black leading-none italic">
               Initialize <br /> Session

@@ -36,8 +36,8 @@ export function Navbar() {
           </Button>
 
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center border-[4px] border-black bg-primary shadow-[4px_4px_0_0_rgba(0,0,0,1)] group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all">
-              <Plane className="h-6 w-6 sm:h-7 sm:w-7 rotate-[-45deg] stroke-[3px]" />
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center border-[4px] border-black bg-primary shadow-[4px_4px_0_0_rgba(0,0,0,1)] group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all overflow-hidden p-1">
+              <img src="/pigeon-logo.png" alt="Kalapato" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col -space-y-1">
               <span className="text-xl sm:text-2xl font-black tracking-tighter uppercase text-black leading-none">
