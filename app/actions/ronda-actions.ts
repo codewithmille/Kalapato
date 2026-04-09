@@ -124,9 +124,113 @@ export async function getUserRegistrations() {
       },
     });
 
-    return { success: true, registrations };
+    return { success: true, registrations: JSON.parse(JSON.stringify(registrations)) };
   } catch (error) {
     console.error("Fetch registrations error:", error);
     return { error: "Failed to retrieve unit registrations." };
+  }
+}
+
+export async function getRecentArrivalLogs() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return { error: "Authentication required" };
+  }
+
+  try {
+    const logs = await prisma.arrivalLog.findMany({
+      where: {
+        registration: {
+          user: { email: session.user.email }
+        }
+      },
+      include: {
+        registration: {
+          include: {
+            bird: true,
+            event: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10
+    });
+
+    return { success: true, logs: JSON.parse(JSON.stringify(logs)) };
+  } catch (error) {
+    console.error("Fetch logs error:", error);
+    return { error: "Failed to retrieve recent mission telemetry." };
+  }
+}
+
+export async function updateArrivalLog(logId: string, newArrivalTime: Date) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return { error: "Authentication required" };
+  }
+
+  try {
+    const log = await prisma.arrivalLog.findUnique({
+      where: { id: logId },
+      include: {
+        registration: {
+          include: {
+            event: true,
+            bird: true,
+            user: true
+          }
+        }
+      }
+    });
+
+    if (!log) return { error: "Log record not found." };
+
+    const distance = log.registration.distance || 0;
+    const releaseTime = new Date(log.registration.event.releaseDateTime);
+    const arrival = new Date(newArrivalTime);
+    
+    const flightTimeMs = arrival.getTime() - releaseTime.getTime();
+    if (flightTimeMs <= 0) return { error: "Arrival time invalid." };
+    
+    const flightTimeMinutes = flightTimeMs / (1000 * 60);
+    const speed = (distance * 1000) / flightTimeMinutes;
+
+    const updatedLog = await prisma.arrivalLog.update({
+      where: { id: logId },
+      data: {
+        arrivalTime: arrival,
+        speed,
+        flightTime: flightTimeMinutes,
+        status: speed >= (log.registration.event.minSpeed || 0) ? "QUALIFIED" : "OUT_OF_TIME",
+      }
+    });
+
+    revalidatePath("/ronda");
+    return { success: true, log: JSON.parse(JSON.stringify(updatedLog)) };
+  } catch (error) {
+    console.error("Update log error:", error);
+    return { error: "Failed to override mission data." };
+  }
+}
+
+export async function deleteArrivalLog(logId: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return { error: "Authentication required" };
+  }
+
+  try {
+    await prisma.arrivalLog.delete({
+      where: { id: logId }
+    });
+
+    revalidatePath("/ronda");
+    return { success: true };
+  } catch (error) {
+    console.error("Delete log error:", error);
+    return { error: "Failed to abort telemetry log." };
   }
 }

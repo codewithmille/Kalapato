@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   ChevronDown
 } from "lucide-react";
-import { getUserRegistrations, recordArrival } from "@/app/actions/ronda-actions";
+import { getUserRegistrations, recordArrival, getRecentArrivalLogs, updateArrivalLog, deleteArrivalLog } from "@/app/actions/ronda-actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -22,9 +22,15 @@ import { cn } from "@/lib/utils";
 export default function RondaPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [selectedReg, setSelectedReg] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isPunching, setIsPunching] = useState(false);
+  
+  // Modal States
+  const [editingLog, setEditingLog] = useState<any>(null);
+  const [editTime, setEditTime] = useState<string>("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // 1. Clock Engine
   useEffect(() => {
@@ -37,17 +43,28 @@ export default function RondaPage() {
   // 2. Fetch Data
   useEffect(() => {
     async function fetchData() {
-      const result = await getUserRegistrations();
-      if (result.success) {
-        // Filter out birds that already have an arrival log
-        setRegistrations(result.registrations.filter((r: any) => !r.arrivalLog));
-      } else {
-        toast.error("DATA_FETCH_ERROR", { description: result.error });
+      const regResult = await getUserRegistrations();
+      if (regResult.success) {
+        setRegistrations(regResult.registrations.filter((r: any) => !r.arrivalLog));
       }
+      
+      const logResult = await getRecentArrivalLogs();
+      if (logResult.success) {
+        setRecentLogs(logResult.logs);
+      }
+      
       setIsLoading(false);
     }
     fetchData();
   }, []);
+
+  const refreshHistory = async () => {
+    const logResult = await getRecentArrivalLogs();
+    if (logResult.success) setRecentLogs(logResult.logs);
+    
+    const regResult = await getUserRegistrations();
+    if (regResult.success) setRegistrations(regResult.registrations.filter((r: any) => !r.arrivalLog));
+  };
 
   const handlePunch = async () => {
     if (!selectedReg) {
@@ -67,6 +84,7 @@ export default function RondaPage() {
       // Remove from list
       setRegistrations(prev => prev.filter(r => r.id !== selectedReg));
       setSelectedReg("");
+      refreshHistory();
     } else {
       // Offline fallback
       if (!navigator.onLine) {
@@ -85,6 +103,36 @@ export default function RondaPage() {
       }
     }
     setIsPunching(false);
+  };
+
+  const handleEditInitiate = (log: any) => {
+    setEditingLog(log);
+    setEditTime(format(new Date(log.arrivalTime), "yyyy-MM-dd'T'HH:mm:ss"));
+  };
+
+  const handleUpdate = async () => {
+    if (!editingLog) return;
+    setIsUpdating(true);
+    const result = await updateArrivalLog(editingLog.id, new Date(editTime));
+    if (result.success) {
+      toast.success("TELEMETRY_OVERRIDDEN", { description: `New speed: ${result.log.speed.toFixed(2)} m/min` });
+      setEditingLog(null);
+      refreshHistory();
+    } else {
+      toast.error("OVERRIDE_FAILED", { description: result.error });
+    }
+    setIsUpdating(false);
+  };
+
+  const handleDelete = async (logId: string) => {
+    if (!confirm("ABORT_TELEMETRY? This will permanently erase the log.")) return;
+    const result = await deleteArrivalLog(logId);
+    if (result.success) {
+      toast.success("LOG_ABORTED", { description: "Unit is now back in deployable state." });
+      refreshHistory();
+    } else {
+      toast.error("ABORT_FAILED", { description: result.error });
+    }
   };
 
   // Sync offline punches when online
@@ -198,15 +246,47 @@ export default function RondaPage() {
 
           {/* Guidelines & Recent Punches (Static/Mock for now) */}
           <div className="space-y-6">
-            <div className="nb-card p-8 bg-black text-white">
-              <History className="h-10 w-10 mb-4 stroke-[3px] text-[#F5C518]" />
+            <div className="nb-card p-6 sm:p-8 bg-black text-white max-h-[600px] overflow-y-auto">
+              <History className="h-8 w-8 mb-4 stroke-[3px] text-[#F5C518]" />
               <h3 className="text-xl font-black uppercase mb-6 tracking-tight">Recent Telemetry</h3>
               
               <div className="space-y-4">
-                <div className="border-l-[4px] border-[#F5C518] pl-4 py-1">
-                  <p className="text-[10px] font-black text-gray-500">READY_FOR_DATA</p>
-                  <p className="text-sm font-bold uppercase tracking-widest italic">Waiting for unit arrival...</p>
-                </div>
+                {recentLogs.length === 0 ? (
+                  <div className="border-l-[4px] border-[#F5C518] pl-4 py-1">
+                    <p className="text-[10px] font-black text-gray-500">READY_FOR_DATA</p>
+                    <p className="text-sm font-bold uppercase tracking-widest italic text-gray-400">Waiting for unit arrival...</p>
+                  </div>
+                ) : (
+                  recentLogs.map((log) => (
+                    <div key={log.id} className="nb-card bg-white/5 border-white/10 p-4 space-y-2 group relative">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-[10px] font-black text-[#F5C518] uppercase tracking-widest">{log.registration.bird.bandNumber}</p>
+                          <p className="text-lg font-black tracking-tighter truncate max-w-[120px]">{log.registration.event.name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-black uppercase text-white">{format(new Date(log.arrivalTime), "HH:mm:ss")}</p>
+                          <p className="text-[10px] font-bold text-green-400 uppercase tracking-tighter">{log.speed.toFixed(2)} m/min</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          onClick={() => handleEditInitiate(log)}
+                          className="h-7 px-2 bg-[#F5C518] text-black font-black text-[10px] uppercase rounded-none"
+                        >
+                          EDIT_TIME
+                        </Button>
+                        <Button 
+                          onClick={() => handleDelete(log.id)}
+                          className="h-7 px-2 bg-red-600 text-white font-black text-[10px] uppercase rounded-none"
+                        >
+                          DELETE
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -231,6 +311,59 @@ export default function RondaPage() {
           </div>
         </div>
       </main>
+
+      {/* TACTICAL_OVERRIDE_MODAL */}
+      {editingLog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="nb-card w-full max-w-md bg-white p-8 animate-in zoom-in duration-200">
+            <div className="mb-6 flex items-center justify-between border-b-[4px] border-black pb-4">
+              <h3 className="text-2xl font-black uppercase tracking-tighter">Tactical_Override</h3>
+              <Button 
+                variant="ghost" 
+                onClick={() => setEditingLog(null)}
+                className="h-10 w-10 p-0 border-[3px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-red-500 hover:text-white"
+              >
+                <Zap className="h-5 w-5 rotate-45" />
+              </Button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/60">UNIT_ID</label>
+                <div className="nb-card bg-black text-[#F5C518] p-4 text-xl font-black">{editingLog.registration.bird.bandNumber}</div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/60">TOUCHDOWN_TIMESTAMP</label>
+                <input 
+                  type="datetime-local" 
+                  step="1"
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="nb-input w-full h-16 text-lg font-black uppercase px-4"
+                />
+              </div>
+
+              <div className="pt-4 flex gap-4">
+                <Button 
+                  onClick={() => setEditingLog(null)}
+                  variant="outline"
+                  className="nb-button flex-1 h-14 border-black text-black font-black uppercase"
+                >
+                  ABORT_EDIT
+                </Button>
+                <Button 
+                  onClick={handleUpdate}
+                  disabled={isUpdating}
+                  className="nb-button flex-1 h-14 bg-[#F5C518] text-black font-black uppercase"
+                >
+                  {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : "APPLY_OVERRIDE"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
