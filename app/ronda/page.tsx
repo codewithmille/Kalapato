@@ -119,7 +119,7 @@ export default function RondaPage() {
       setEditingLog(null);
       refreshHistory();
     } else {
-      toast.error("OVERRIDE_FAILED", { description: result.error });
+      toast.error("OVERRIDE_FAILED", { description: result.error || "Mission data rejected by HQ." });
     }
     setIsUpdating(false);
   };
@@ -270,16 +270,16 @@ export default function RondaPage() {
                         </div>
                       </div>
                       
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2 transition-all mt-2">
                         <Button 
                           onClick={() => handleEditInitiate(log)}
-                          className="h-7 px-2 bg-[#F5C518] text-black font-black text-[10px] uppercase rounded-none"
+                          className="h-8 px-3 bg-[#F5C518] text-black font-black text-[10px] uppercase rounded-none border-[2px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                         >
                           EDIT_TIME
                         </Button>
                         <Button 
                           onClick={() => handleDelete(log.id)}
-                          className="h-7 px-2 bg-red-600 text-white font-black text-[10px] uppercase rounded-none"
+                          className="h-8 px-3 bg-red-600 text-white font-black text-[10px] uppercase rounded-none border-[2px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                         >
                           DELETE
                         </Button>

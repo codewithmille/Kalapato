@@ -191,11 +191,20 @@ export async function updateArrivalLog(logId: string, newArrivalTime: Date) {
     const releaseTime = new Date(log.registration.event.releaseDateTime);
     const arrival = new Date(newArrivalTime);
     
+    console.log(`[HQ_LOG] Updating Log: ${logId}`);
+    console.log(`[HQ_LOG] ReleaseTime: ${releaseTime.toISOString()}`);
+    console.log(`[HQ_LOG] ArrivalTime: ${arrival.toISOString()}`);
+
     const flightTimeMs = arrival.getTime() - releaseTime.getTime();
-    if (flightTimeMs <= 0) return { error: "Arrival time invalid." };
+    if (flightTimeMs <= 0) {
+      console.warn("[HQ_WARN] Negative flight time detected.");
+      return { error: "Arrival time must be after the release time." };
+    }
     
     const flightTimeMinutes = flightTimeMs / (1000 * 60);
     const speed = (distance * 1000) / flightTimeMinutes;
+
+    console.log(`[HQ_LOG] Computed Speed: ${speed.toFixed(2)} m/min`);
 
     const updatedLog = await prisma.arrivalLog.update({
       where: { id: logId },
@@ -211,7 +220,7 @@ export async function updateArrivalLog(logId: string, newArrivalTime: Date) {
     return { success: true, log: JSON.parse(JSON.stringify(updatedLog)) };
   } catch (error) {
     console.error("Update log error:", error);
-    return { error: "Failed to override mission data." };
+    return { error: `Command Failure: ${error instanceof Error ? error.message : "Unknown telemetry error"}` };
   }
 }
 
@@ -232,5 +241,47 @@ export async function deleteArrivalLog(logId: string) {
   } catch (error) {
     console.error("Delete log error:", error);
     return { error: "Failed to abort telemetry log." };
+  }
+}
+
+export async function getAllEvents() {
+  try {
+    const events = await prisma.event.findMany({
+      include: {
+        club: true,
+      },
+      orderBy: {
+        releaseDateTime: "desc",
+      },
+    });
+    return { success: true, events: JSON.parse(JSON.stringify(events)) };
+  } catch (error) {
+    console.error("Fetch events error:", error);
+    return { error: "Failed to load flight operations data." };
+  }
+}
+
+export async function updateEvent(eventId: string, data: { name: string; description: string; status: string }) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return { error: "Authentication required" };
+  }
+
+  try {
+    const updated = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        name: data.name,
+        description: data.description,
+        status: data.status,
+      }
+    });
+
+    revalidatePath("/dashboard");
+    return { success: true, event: JSON.parse(JSON.stringify(updated)) };
+  } catch (error) {
+    console.error("Update event error:", error);
+    return { error: "Failed to override mission metadata." };
   }
 }
