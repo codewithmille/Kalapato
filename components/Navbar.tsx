@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Plane, LayoutDashboard, Trophy, Map as MapIcon, LogOut, User } from "lucide-react";
+import { Plane, LayoutDashboard, Trophy, Map as MapIcon, LogOut, User, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
 import { OfflineStatus } from "@/components/OfflineStatus";
@@ -14,6 +14,7 @@ export function Navbar() {
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Ronda Clock", href: "/ronda", icon: Clock },
     { name: "Events", href: "/events", icon: Trophy },
     { name: "Map View", href: "/map", icon: MapIcon },
   ];
