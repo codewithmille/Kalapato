@@ -123,7 +123,7 @@ export default function RondaPage() {
             <Zap className="h-5 w-5 stroke-[3px]" />
             <span>FIELD_OPERATIONS_ACTIVE</span>
           </div>
-          <h1 className="text-7xl font-black uppercase tracking-tighter leading-[0.8] mb-4 text-black dark:text-white">
+          <h1 className="text-4xl sm:text-7xl font-black uppercase tracking-tighter leading-[0.8] mb-4 text-black dark:text-white">
             Tactical <br /> Ronda Clock
           </h1>
           <p className="text-sm font-bold uppercase tracking-widest text-gray-500">High-precision arrival telemetry for active racing events.</p>
@@ -138,17 +138,17 @@ export default function RondaPage() {
                 SYSTEM_TIME_SYNC
               </div>
               
-              <div className="text-[8rem] font-black tabular-nums leading-none tracking-tighter text-black dark:text-white md:text-[12rem]">
+              <div className="text-5xl sm:text-[8rem] md:text-[12rem] font-black tabular-nums leading-none tracking-tighter text-black dark:text-white">
                 {format(currentTime, "HH:mm:ss")}
               </div>
               
-              <div className="mt-4 text-2xl font-black uppercase text-gray-400">
+              <div className="mt-4 text-sm sm:text-2xl font-black uppercase text-gray-400">
                 {format(currentTime, "EEEE, MMMM dd, yyyy")}
               </div>
             </div>
 
-            <div className="nb-card p-10 bg-[#F5C518]">
-              <h3 className="mb-6 text-3xl font-black uppercase tracking-tight text-black flex items-center gap-3">
+            <div className="nb-card p-6 sm:p-10 bg-[#F5C518]">
+              <h3 className="mb-6 text-xl sm:text-3xl font-black uppercase tracking-tight text-black flex items-center gap-3">
                 <Plane className="h-8 w-8 stroke-[3px]" />
                 Identify Arrival Unit
               </h3>
@@ -171,11 +171,11 @@ export default function RondaPage() {
                   <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 h-8 w-8 pointer-events-none" />
                 </div>
 
-                <Button 
-                  onClick={handlePunch}
-                  disabled={isPunching || !selectedReg || registrations.length === 0}
-                  className="nb-button w-full h-24 bg-black text-[#F5C518] text-4xl font-black uppercase tracking-tighter hover:bg-[#111]"
-                >
+                  <Button 
+                    onClick={handlePunch}
+                    disabled={isPunching || !selectedReg || registrations.length === 0}
+                    className="nb-button w-full h-16 sm:h-24 bg-black text-[#F5C518] text-xl sm:text-4xl font-black uppercase tracking-tighter hover:bg-[#111]"
+                  >
                   {isPunching ? (
                     <>
                       <Loader2 className="mr-4 h-10 w-10 animate-spin stroke-[4px]" />
