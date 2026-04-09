@@ -2,12 +2,33 @@ import { Navbar } from "@/components/Navbar";
 import { prisma } from "@/lib/prisma";
 import { Activity } from "lucide-react";
 import MapClientLoader from "@/components/MapClientLoader";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function GlobalMapPage() {
   let events: any[] = [];
+  let userProfile: any = null;
+
   try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+      const profileData = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { latitude: true, longitude: true, name: true }
+      });
+      
+      if (profileData) {
+        userProfile = {
+          latitude: profileData.latitude !== null ? Number(profileData.latitude) : null,
+          longitude: profileData.longitude !== null ? Number(profileData.longitude) : null,
+          name: profileData.name
+        };
+        console.log(`[MAP_DATA_DEBUG] Parsed User Profile for ${session.user.email}:`, userProfile);
+      }
+    }
+
     events = await prisma.event.findMany({
       where: {
         status: "ACTIVE"
@@ -50,6 +71,7 @@ export default async function GlobalMapPage() {
             <MapClientLoader 
               releasePoint={defaultCenter} 
               registrations={events.flatMap(e => e.registrations)} 
+              currentUserLoft={userProfile}
             />
           </div>
           

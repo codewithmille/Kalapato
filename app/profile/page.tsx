@@ -12,10 +12,21 @@ import {
   Save, 
   Loader2, 
   ShieldCheck,
-  Compass
+  Compass,
+  Radar
 } from "lucide-react";
 import { updateProfileCoordinates, getUserProfile } from "@/app/actions/user-actions";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
+
+const MapPreview = dynamic(() => import("@/components/ProfileMapPreview"), { 
+  ssr: false,
+  loading: () => (
+    <div className="h-[300px] w-full bg-gray-100 animate-pulse flex items-center justify-center border-[3px] border-black border-dashed">
+      <Radar className="h-8 w-8 animate-spin text-gray-400" />
+    </div>
+  )
+});
 
 export default function ProfilePage() {
   const { data: session } = useSession();
@@ -158,6 +169,17 @@ export default function ProfilePage() {
                       className="nb-input h-16 text-xl font-mono" 
                     />
                   </div>
+                </div>
+
+                <div className="mt-8">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-black/60 mb-4 flex items-center gap-2">
+                    <Radar className="h-4 w-4" />
+                    Visual_Tactical_Preview
+                  </div>
+                  <MapPreview 
+                    lat={parseFloat(lat) || 13.6218} 
+                    lon={parseFloat(lon) || 123.1875} 
+                  />
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-6 pt-6">

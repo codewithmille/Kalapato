@@ -19,13 +19,15 @@ const MapView = dynamic(() => import("@/components/MapView"), {
 interface MapClientLoaderProps {
   releasePoint: { lat: number; lon: number; name: string };
   registrations: any[];
+  currentUserLoft?: any;
 }
 
-export default function MapClientLoader({ releasePoint, registrations }: MapClientLoaderProps) {
+export default function MapClientLoader({ releasePoint, registrations, currentUserLoft }: MapClientLoaderProps) {
   return (
     <MapView 
       releasePoint={releasePoint} 
       registrations={registrations} 
+      currentUserLoft={currentUserLoft}
     />
   );
 }
