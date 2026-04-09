@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   Compass
 } from "lucide-react";
-import { updateProfileCoordinates } from "@/app/actions/user-actions";
+import { updateProfileCoordinates, getUserProfile } from "@/app/actions/user-actions";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
@@ -23,6 +23,27 @@ export default function ProfilePage() {
   const [lon, setLon] = useState<string>("");
   const [isFetchingGps, setIsFetchingGps] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const result = await getUserProfile();
+        if (result.success && result.user) {
+          if (result.user.latitude !== null) setLat(result.user.latitude.toString());
+          if (result.user.longitude !== null) setLon(result.user.longitude.toString());
+        }
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    }
+
+    if (session?.user) {
+      loadProfile();
+    }
+  }, [session]);
 
   // Initialize from session if available (though session might not have lat/lon yet)
   // We'll trust the user to fetch or enter them manually for the first time.
@@ -94,102 +115,109 @@ export default function ProfilePage() {
           <p className="text-sm font-bold uppercase tracking-widest text-gray-500">Configure default flight path parameters and loft location</p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 nb-card p-10 bg-white dark:bg-[#1E2A3A]">
-            <div className="mb-8 flex items-center gap-4 border-b-[3px] border-black pb-4">
-              <div className="flex h-12 w-12 items-center justify-center border-[3px] border-black bg-[#F5C518] shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
-                <Navigation className="h-6 w-6 stroke-[3px]" />
+        {isInitialLoading ? (
+          <div className="nb-card p-20 flex flex-col items-center justify-center bg-white dark:bg-[#1E2A3A]">
+            <Loader2 className="h-16 w-16 animate-spin text-primary stroke-[3px] mb-6" />
+            <p className="text-xl font-black uppercase tracking-tighter">Retrieving Personnel Data...</p>
+          </div>
+        ) : (
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2 nb-card p-10 bg-white dark:bg-[#1E2A3A]">
+              <div className="mb-8 flex items-center gap-4 border-b-[3px] border-black pb-4">
+                <div className="flex h-12 w-12 items-center justify-center border-[3px] border-black bg-[#F5C518] shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+                  <Navigation className="h-6 w-6 stroke-[3px]" />
+                </div>
+                <h3 className="text-2xl font-black uppercase">Home Loft Coordinates</h3>
               </div>
-              <h3 className="text-2xl font-black uppercase">Home Loft Coordinates</h3>
+
+              <div className="space-y-8">
+                <div className="grid gap-8 sm:grid-cols-2">
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black tracking-widest text-black dark:text-[#F5C518] uppercase bg-black/5 dark:bg-black p-2 block w-fit shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
+                      LOFT_LATITUDE
+                    </Label>
+                    <Input 
+                      type="number" 
+                      step="0.000001"
+                      value={lat}
+                      onChange={(e) => setLat(e.target.value)}
+                      placeholder="e.g. 13.6218" 
+                      className="nb-input h-16 text-xl font-mono" 
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black tracking-widest text-black dark:text-[#F5C518] uppercase bg-black/5 dark:bg-black p-2 block w-fit shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
+                      LOFT_LONGITUDE
+                    </Label>
+                    <Input 
+                      type="number" 
+                      step="0.000001"
+                      value={lon}
+                      onChange={(e) => setLon(e.target.value)}
+                      placeholder="e.g. 123.1875" 
+                      className="nb-input h-16 text-xl font-mono" 
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-6 pt-6">
+                  <Button 
+                    onClick={handleGetLocation}
+                    disabled={isFetchingGps}
+                    className="nb-button bg-[#F5C518] text-black flex-1 h-16 text-lg font-black"
+                  >
+                    {isFetchingGps ? (
+                      <>
+                        <Loader2 className="mr-3 h-6 w-6 animate-spin stroke-[3px]" />
+                        CAPTURING_SIGNAL...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="mr-3 h-6 w-6 stroke-[3px]" />
+                        LOCK_GPS_SIGNAL
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="nb-button bg-black text-white dark:bg-white dark:text-black flex-1 h-16 text-lg font-black"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-3 h-6 w-6 animate-spin stroke-[3px]" />
+                        SAVING...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-3 h-6 w-6 stroke-[3px]" />
+                        DATA_COMMIT
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-8">
-              <div className="grid gap-8 sm:grid-cols-2">
-                <div className="space-y-4">
-                  <Label className="text-[10px] font-black tracking-widest text-black dark:text-[#F5C518] uppercase bg-black/5 dark:bg-black p-2 block w-fit shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-                    LOFT_LATITUDE
-                  </Label>
-                  <Input 
-                    type="number" 
-                    step="0.000001"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    placeholder="e.g. 13.6218" 
-                    className="nb-input h-16 text-xl font-mono" 
-                  />
-                </div>
-                <div className="space-y-4">
-                  <Label className="text-[10px] font-black tracking-widest text-black dark:text-[#F5C518] uppercase bg-black/5 dark:bg-black p-2 block w-fit shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-                    LOFT_LONGITUDE
-                  </Label>
-                  <Input 
-                    type="number" 
-                    step="0.000001"
-                    value={lon}
-                    onChange={(e) => setLon(e.target.value)}
-                    placeholder="e.g. 123.1875" 
-                    className="nb-input h-16 text-xl font-mono" 
-                  />
-                </div>
+            <div className="space-y-6">
+              <div className="nb-card p-8 bg-[#F5C518] text-black">
+                <ShieldCheck className="h-10 w-10 mb-4 stroke-[3px]" />
+                <h3 className="text-xl font-black uppercase mb-2">Protocol Note</h3>
+                <p className="text-xs font-bold leading-relaxed uppercase">
+                  Synchronizing your home loft coordinates here will allow the system to automatically calculate mission distance relative to your registered unit base.
+                </p>
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-6 pt-6">
-                <Button 
-                  onClick={handleGetLocation}
-                  disabled={isFetchingGps}
-                  className="nb-button bg-[#F5C518] text-black flex-1 h-16 text-lg font-black"
-                >
-                  {isFetchingGps ? (
-                    <>
-                      <Loader2 className="mr-3 h-6 w-6 animate-spin stroke-[3px]" />
-                      CAPTURING_SIGNAL...
-                    </>
-                  ) : (
-                    <>
-                      <MapPin className="mr-3 h-6 w-6 stroke-[3px]" />
-                      LOCK_GPS_SIGNAL
-                    </>
-                  )}
-                </Button>
-                
-                <Button 
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="nb-button bg-black text-white dark:bg-white dark:text-black flex-1 h-16 text-lg font-black"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-3 h-6 w-6 animate-spin stroke-[3px]" />
-                      SAVING...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-3 h-6 w-6 stroke-[3px]" />
-                      DATA_COMMIT
-                    </>
-                  )}
-                </Button>
+              
+              <div className="nb-card p-8 bg-black text-white">
+                <h3 className="text-[10px] font-black text-[#F5C518] uppercase mb-1 tracking-widest">PERSONNEL_ID</h3>
+                <p className="font-mono text-sm mb-4 truncate">{session?.user?.email}</p>
+                <h3 className="text-[10px] font-black text-[#F5C518] uppercase mb-1 tracking-widest">CLEARANCE_LEVEL</h3>
+                <p className="font-black uppercase text-xl">MEMBER_ACTIVE</p>
               </div>
             </div>
           </div>
-
-          <div className="space-y-6">
-            <div className="nb-card p-8 bg-[#F5C518] text-black">
-              <ShieldCheck className="h-10 w-10 mb-4 stroke-[3px]" />
-              <h3 className="text-xl font-black uppercase mb-2">Protocol Note</h3>
-              <p className="text-xs font-bold leading-relaxed uppercase">
-                Synchronizing your home loft coordinates here will allow the system to automatically calculate mission distance relative to your registered unit base.
-              </p>
-            </div>
-            
-            <div className="nb-card p-8 bg-black text-white">
-              <h3 className="text-[10px] font-black text-[#F5C518] uppercase mb-1 tracking-widest">PERSONNEL_ID</h3>
-              <p className="font-mono text-sm mb-4 truncate">{session?.user?.email}</p>
-              <h3 className="text-[10px] font-black text-[#F5C518] uppercase mb-1 tracking-widest">CLEARANCE_LEVEL</h3>
-              <p className="font-black uppercase text-xl">MEMBER_ACTIVE</p>
-            </div>
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

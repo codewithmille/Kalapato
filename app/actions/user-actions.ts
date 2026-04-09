@@ -28,3 +28,25 @@ export async function updateProfileCoordinates(lat: number, lon: number) {
     return { error: "Failed to update pilot coordinates." };
   }
 }
+export async function getUserProfile() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return { error: "Authentication required" };
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: {
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    return { error: "Failed to fetch pilot profile." };
+  }
+}
