@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plane, LayoutDashboard, Trophy, Map as MapIcon, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
+import { OfflineStatus } from "@/components/OfflineStatus";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -53,6 +54,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <OfflineStatus />
           {status === "loading" ? (
             <div className="h-8 w-24 animate-pulse bg-gray-200 nb-card border-none shadow-none" />
           ) : session ? (
