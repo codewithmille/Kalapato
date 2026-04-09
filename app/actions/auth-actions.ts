@@ -38,5 +38,5 @@ export async function registerUserAction(prevState: any, formData: FormData) {
     return { error: "Failed to initialize personnel record." };
   }
 
-  redirect("/login");
+  redirect("/login?registered=true");
 }

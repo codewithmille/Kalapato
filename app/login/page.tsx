@@ -2,27 +2,39 @@
 
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { Plane, AlertTriangle, Loader2 } from "lucide-react";
+import { Plane, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const registered = searchParams.get("registered");
+
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/dashboard");
     }
-  }, [status, router]);
+    
+    if (registered === "true") {
+      toast.success("PERSONNEL_INITIALIZED", {
+        description: "Credentials verified. You may now initialize session.",
+      });
+      // Clean up the URL
+      router.replace("/login");
+    }
+  }, [status, router, registered]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
