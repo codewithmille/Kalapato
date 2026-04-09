@@ -9,7 +9,8 @@ import {
   ChevronRight,
   TrendingUp,
   Award,
-  Globe
+  Globe,
+  Bird
 } from "lucide-react";
 
 export default function Home() {
@@ -62,7 +63,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
               {[
                 { label: "AVG VELOCITY", value: "1,142 m/min", icon: TrendingUp },
-                { label: "ACTIVE UNITS", value: "482", icon: Plane },
+                { label: "ACTIVE UNITS", value: "482", icon: Bird },
                 { label: "PRECISION", value: "0.0001", icon: Zap },
                 { label: "GLOBAL HUBS", value: "24", icon: Globe },
               ].map((stat, i) => (
@@ -145,8 +146,8 @@ export default function Home() {
       <footer className="border-t-[6px] border-black bg-white dark:bg-[#0D1426] py-16">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="p-2 border-[2px] border-black bg-[#F5C518] shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-              <Plane className="h-6 w-6 text-black rotate-[-45deg]" />
+            <div className="h-10 w-10 border-[3px] border-black bg-[#F5C518] shadow-[2px_2px_0_0_rgba(0,0,0,1)] overflow-hidden p-1">
+              <img src="/pigeon-logo.png" alt="Kalapato" className="h-full w-full object-contain" />
             </div>
             <span className="text-2xl font-black uppercase tracking-tighter text-black dark:text-white">Kalapato</span>
           </div>

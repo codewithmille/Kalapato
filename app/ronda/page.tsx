@@ -12,7 +12,8 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertTriangle,
-  ChevronDown
+  ChevronDown,
+  Bird
 } from "lucide-react";
 import { getUserRegistrations, recordArrival, getRecentArrivalLogs, updateArrivalLog, deleteArrivalLog } from "@/app/actions/ronda-actions";
 import { toast } from "sonner";
@@ -197,7 +198,7 @@ export default function RondaPage() {
 
             <div className="nb-card p-6 sm:p-10 bg-[#F5C518]">
               <h3 className="mb-6 text-xl sm:text-3xl font-black uppercase tracking-tight text-black flex items-center gap-3">
-                <Plane className="h-8 w-8 stroke-[3px]" />
+                <Bird className="h-8 w-8 stroke-[3px]" />
                 Identify Arrival Unit
               </h3>
               
